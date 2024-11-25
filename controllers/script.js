@@ -34,7 +34,7 @@ exports.getScript = async(req, res, next) => {
             });
         }
 
-        // What day in the study is the user in? 
+        // What day in the study is the user in?
         // Update study_days, which tracks the number of time user views feed.
         const current_day = Math.floor(time_diff / one_day);
         if (current_day < process.env.NUM_DAYS) {
@@ -42,7 +42,7 @@ exports.getScript = async(req, res, next) => {
             user.save();
         }
 
-        // Array of actor posts that match the user's experimental condition, within the past 24 hours, sorted by descending time. 
+        // Array of actor posts that match the user's experimental condition, within the past 24 hours, sorted by descending time.
         let script_feed = await Script.find({
                 class: { "$in": ["", user.experimentalCondition] }
             })
@@ -128,7 +128,7 @@ exports.newPost = async(req, res) => {
 
 /**
  * POST /feed/
- * Record user's actions on ACTOR posts. 
+ * Record user's actions on ACTOR posts.
  */
 exports.postUpdateFeedAction = async(req, res, next) => {
     try {
@@ -259,7 +259,7 @@ exports.postUpdateFeedAction = async(req, res, next) => {
 
 /**
  * POST /userPost_feed/
- * Record user's actions on USER posts. 
+ * Record user's actions on USER posts.
  */
 exports.postUpdateUserPostFeedAction = async(req, res, next) => {
     try {
@@ -297,7 +297,7 @@ exports.postUpdateUserPostFeedAction = async(req, res, next) => {
             else if (req.body.like) {
                 user.posts[feedIndex].comments[commentIndex].liked = true;
             }
-            // User unliked the comment. 
+            // User unliked the comment.
             else if (req.body.unlike) {
                 user.posts[feedIndex].comments[commentIndex].liked = false;
             }
@@ -306,7 +306,7 @@ exports.postUpdateUserPostFeedAction = async(req, res, next) => {
                 user.posts[feedIndex].comments[commentIndex].flagged = true;
             }
         }
-        // User interacted with the post. 
+        // User interacted with the post.
         else {
             // User liked the post.
             if (req.body.like) {
@@ -323,3 +323,95 @@ exports.postUpdateUserPostFeedAction = async(req, res, next) => {
         next(err);
     }
 }
+
+
+/**
+ * POST /feed/share
+ * Share a post to the user's feed.
+ */
+const fs = require('fs');
+const path = require('path');
+
+
+
+exports.sharePost = async (req, res, next) => {
+    try {
+        console.log('SharePost triggered with data:', req.body);
+
+        const { postID } = req.body;
+
+        if (!postID) {
+            console.error('No postID provided.');
+            return res.status(400).json({ message: 'No postID provided.' });
+        }
+
+        console.log('Looking for postID:', postID);
+
+        // Step 1: Find the original post in the database
+        const originalPost = await Script.findById(postID).exec();
+
+        if (!originalPost) {
+            console.error('Post not found in the database:', postID);
+            return res.status(404).json({ message: 'Post not found.' });
+        }
+
+        console.log('Original post found:', originalPost);
+
+        // Step 2: Fetch the current user
+        const user = await User.findById(req.user.id).exec();
+        if (!user) {
+            console.error('User not found.');
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        // Step 3: Copy the image and save it with multer's naming
+        const originalImagePath = path.join(__dirname, '../post_pictures', originalPost.picture); // Original image location
+
+        // Simulate a "file" object for multer
+        const file = {
+            originalname: originalPost.picture, // Original filename
+            path: originalImagePath, // Path to the file
+        };
+
+        // Use multer's filename generator to get the new file path
+        const uniqueName = `${user.id}_${Date.now()}_${file.originalname.replace(/[^A-Z0-9]+/ig, "_")}`;
+        const userPostImagePath = path.join(__dirname, '../uploads/user_post', uniqueName);
+
+        // Copy the file to the destination directory
+        fs.copyFileSync(originalImagePath, userPostImagePath);
+
+        console.log('Image successfully copied to:', userPostImagePath);
+
+        // Step 4: Create a new post object
+        user.numPosts += 1;
+        const currDate = Date.now();
+
+        const newPost = {
+            type: "user_post", // Treat as user-created post
+            postID: user.numPosts, // New unique post ID for the user
+            body: originalPost.body, // Copy body
+            picture: uniqueName, // Save the copied image filename
+            liked: false, // Reset like status
+            likes: 0, // Reset likes count
+            comments: [], // No comments initially
+            absTime: currDate, // Current absolute time
+            relativeTime: currDate - user.createdAt, // Time relative to user's account creation
+            shared: true, // Indicate this post was shared
+            shareTime: currDate, // Time of sharing
+        };
+
+        // Step 5: Add the new post to the user's posts array
+        user.posts.unshift(newPost);
+
+        // Save the updated user document
+        await user.save();
+
+        console.log('Shared post successfully created and saved:', newPost);
+
+        // Respond to the client
+        res.status(200).json({ message: 'Post shared successfully.', post: newPost });
+    } catch (err) {
+        console.error('Error sharing post:', err);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+};

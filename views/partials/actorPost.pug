@@ -21,9 +21,10 @@
     .description=val.body
     .myTimer.hidden 0
   .ui.bottom.three.attached.icon.buttons
-    .ui.reply.button(tabindex='0')
+    .ui.reply.button(data-post-id=val.id, data-post-class=val.class, tabindex='0')
       i.reply.icon
-      |  Reply
+      |  Share
+
     .ui.flag.button(tabindex='0')
       i.flag.icon
       |  Flag

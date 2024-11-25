@@ -253,6 +253,22 @@ function addComment(e) {
     }
 }
 
+function sharePost(e) {
+    const target = $(e.target).closest('.ui.reply.button');
+    const postID = target.closest(".ui.fluid.card").attr("postID");
+    const postClass = target.closest(".ui.fluid.card").attr("postClass");
+    const csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+    $.post("/feed/share", {
+        postID: postID,
+        postClass: postClass,
+        _csrf: csrfToken
+    })
+        .done(() => alert("Post shared successfully!"))
+        .fail(() => alert("Failed to share the post. Please try again."));
+}
+
+
 function followUser(e) {
     const target = $(e.target);
     const username = target.attr('actor_un');
@@ -289,10 +305,35 @@ $(window).on('load', () => {
 
     // ************ Actions on Main Post ***************
     // Focus new comment element if "Reply" button is clicked
-    $('.reply.button').on('click', function() {
-        let parent = $(this).closest(".ui.fluid.card");
-        parent.find("textarea.newcomment").focus();
+    // Share Post functionality
+    $('.reply.button').on('click', function (e) {
+        const target = $(e.target).closest('.ui.reply.button'); // Identify clicked "Share" button
+        const postElement = target.closest('.ui.fluid.card'); // Get the post element
+        const postID = postElement.attr('postID'); // Extract the post ID
+        const postType = postElement.attr('type'); // Extract the type attribute
+
+        // Conditional logic based on post type
+        if (postType === "userPost") {
+            // If the post is created by the user, focus on the comment box
+            postElement.find('.ui.input textarea.newcomment').focus(); // Focus the comment text box
+        } else if (postType === "actor") {
+            // If the post is created by an actor, trigger the share functionality
+            $.post('/feed/share', {
+                postID: postID,
+                _csrf: $('meta[name="csrf-token"]').attr('content') // CSRF protection
+            })
+                .done(function () {
+                    alert('Post shared to your feed!');
+                })
+                .fail(function () {
+                    alert('Failed to share the post. Please try again.');
+                });
+        } else {
+            console.error(`Unknown post type detected: ${postType}`);
+        }
     });
+
+
 
     // Press enter to submit a comment
     $("textarea.newcomment").keydown(function(event) {

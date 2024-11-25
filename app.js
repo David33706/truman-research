@@ -228,6 +228,9 @@ app.get('/actors', passportConfig.isAuthenticated, actorsController.getActors)
 app.get('/feed', passportConfig.isAuthenticated, scriptController.getScript);
 app.post('/feed', passportConfig.isAuthenticated, scriptController.postUpdateFeedAction);
 app.post('/userPost_feed', passportConfig.isAuthenticated, scriptController.postUpdateUserPostFeedAction);
+app.post('/feed/share', passportConfig.isAuthenticated, scriptController.sharePost);
+
+
 app.get('/test', passportConfig.isAuthenticated, function(req, res) {
     res.render('test', {
         title: 'Test'
@@ -265,3 +268,5 @@ app.listen(app.get('port'), () => {
     console.log('  Press CTRL-C to stop\n');
 });
 module.exports = app;
+
+console.log('App is running updated code.');
