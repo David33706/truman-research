@@ -336,7 +336,6 @@ const path = require('path');
 
 exports.sharePost = async (req, res, next) => {
     try {
-        console.log('SharePost triggered with data:', req.body);
 
         const { postID } = req.body;
 
@@ -345,8 +344,6 @@ exports.sharePost = async (req, res, next) => {
             return res.status(400).json({ message: 'No postID provided.' });
         }
 
-        console.log('Looking for postID:', postID);
-
         // Step 1: Find the original post in the database
         const originalPost = await Script.findById(postID).exec();
 
@@ -354,8 +351,6 @@ exports.sharePost = async (req, res, next) => {
             console.error('Post not found in the database:', postID);
             return res.status(404).json({ message: 'Post not found.' });
         }
-
-        console.log('Original post found:', originalPost);
 
         // Step 2: Fetch the current user
         const user = await User.findById(req.user.id).exec();
@@ -380,7 +375,6 @@ exports.sharePost = async (req, res, next) => {
         // Copy the file to the destination directory
         fs.copyFileSync(originalImagePath, userPostImagePath);
 
-        console.log('Image successfully copied to:', userPostImagePath);
 
         // Step 4: Create a new post object
         user.numPosts += 1;
@@ -406,7 +400,6 @@ exports.sharePost = async (req, res, next) => {
         // Save the updated user document
         await user.save();
 
-        console.log('Shared post successfully created and saved:', newPost);
 
         // Respond to the client
         res.status(200).json({ message: 'Post shared successfully.', post: newPost });
