@@ -307,31 +307,41 @@ $(window).on('load', () => {
     // Focus new comment element if "Reply" button is clicked
     // Share Post functionality
     $('.reply.button').on('click', function (e) {
-        const target = $(e.target).closest('.ui.reply.button'); // Identify clicked "Share" button
-        const postElement = target.closest('.ui.fluid.card'); // Get the post element
-        const postID = postElement.attr('postID'); // Extract the post ID
-        const postType = postElement.attr('type'); // Extract the type attribute
+        const target = $(e.target).closest('.ui.reply.button');
+        const postElement = target.closest('.ui.fluid.card');
+        const postID = postElement.attr('postID');
+        const postType = postElement.attr('type');
+        const statusMessage = postElement.find('.status-message');
 
-        // Conditional logic based on post type
+        // Clear any existing message
+        statusMessage.remove();
+
         if (postType === "userPost") {
-            // If the post is created by the user, focus on the comment box
-            postElement.find('.ui.input textarea.newcomment').focus(); // Focus the comment text box
+            postElement.find('.ui.input textarea.newcomment').focus();
+            postElement.append('<div class="status-message success">Write your comment below!</div>');
         } else if (postType === "actor") {
-            // If the post is created by an actor, trigger the share functionality
             $.post('/feed/share', {
                 postID: postID,
-                _csrf: $('meta[name="csrf-token"]').attr('content') // CSRF protection
+                _csrf: $('meta[name="csrf-token"]').attr('content')
             })
                 .done(function () {
-                    alert('Post shared to your feed!');
+                    postElement.append('<div class="status-message success">Post shared to your feed!</div>');
                 })
                 .fail(function () {
-                    alert('Failed to share the post. Please try again.');
+                    postElement.append('<div class="status-message error">Failed to share the post. Please try again.</div>');
                 });
         } else {
-            console.error(`Unknown post type detected: ${postType}`);
+            postElement.append('<div class="status-message error">Unknown post type detected.</div>');
         }
+
+        // Automatically remove the message after 3 seconds
+        setTimeout(() => {
+            postElement.find('.status-message').fadeOut(300, function () {
+                $(this).remove();
+            });
+        }, 3000);
     });
+
 
 
 

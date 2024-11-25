@@ -3,7 +3,6 @@ body {
     padding: 0em;
 }
 
-
 /*Page Container*/
 
 #pagegrid {
@@ -14,7 +13,6 @@ body {
     padding-top: 50px;
     justify-content: center;
 }
-
 
 /*General CSS*/
 
@@ -28,7 +26,6 @@ button,
     cursor: pointer;
 }
 
-
 /* Header CSS */
 
 .ui.menu .item>i.icon {
@@ -39,15 +36,13 @@ button,
     height: 35px;
 }
 
-
 /*Other*/
 
 .ui.fluid.card>.content>.description {
     font-size: 1.05em;
 }
 
-
-/* Image Upload*/
+/* Image Upload */
 
 .image-upload>input {
     display: none;
@@ -55,4 +50,45 @@ button,
 
 .image-upload img {
     cursor: pointer;
+}
+
+/* Status Message Styles */
+
+.status-message {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    animation: fadeInOut 3s ease forwards;
+    text-align: center;
+}
+
+.status-message.success {
+    background-color: #e0f7fa;
+    color: #00695c;
+}
+
+.status-message.error {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+/* Fade-in-out animation for status messages */
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    10% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    90% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
 }
